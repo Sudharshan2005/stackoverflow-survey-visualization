@@ -7,7 +7,6 @@ from utils.data_loader import load_data, load_schema, preprocess_data, get_langu
 import numpy as np
 import re
 
-# Page configuration
 st.set_page_config(
     page_title="Stack Overflow Survey 2025",
     page_icon="📊",
@@ -15,7 +14,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Enhanced CSS with better styling
 st.markdown("""
 <style>
     .main-header {
@@ -148,8 +146,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Comprehensive currency conversion rates (approximate as of 2024-2025)
-# Using average exchange rates against USD
+
 CURRENCY_RATES = {
     'USD': 1.0,
     'EUR': 1.08,      # European Euro
@@ -302,27 +299,21 @@ def extract_currency_code(currency_text):
     
     currency_text = str(currency_text).strip()
     
-    # Handle special cases
     if currency_text == 'Unknown' or currency_text == 'none':
         return 'Unknown'
     
-    # Clean the text - remove tabs and extra spaces
     currency_text = currency_text.replace('\t', ' ')
     
-    # Try to extract 3-letter code from beginning
     match = re.match(r'^([A-Z]{3})\b', currency_text)
     if match:
         code = match.group(1)
-        # Check if this code is in our conversion rates
         if code in CURRENCY_RATES:
             return code
     
-    # Try to find currency codes in the text
     for code in CURRENCY_RATES.keys():
         if code in currency_text and code != 'Unknown' and code != 'none':
             return code
     
-    # If no code found, try common patterns
     if 'dollar' in currency_text.lower():
         if 'US' in currency_text or 'United States' in currency_text:
             return 'USD'
@@ -335,7 +326,7 @@ def extract_currency_code(currency_text):
         elif 'Singapore' in currency_text:
             return 'SGD'
         else:
-            return 'USD'  # Default to USD for unspecified dollars
+            return 'USD' 
     
     elif 'euro' in currency_text.lower():
         return 'EUR'
@@ -353,7 +344,7 @@ def extract_currency_code(currency_text):
         elif 'Nepal' in currency_text:
             return 'NPR'
         else:
-            return 'INR'  # Default to INR for unspecified rupees
+            return 'INR' 
     
     return 'Unknown'
 
@@ -362,22 +353,16 @@ def clean_salary_value(salary):
     if pd.isna(salary) or salary is None:
         return None
     
-    # Convert to string first
     salary_str = str(salary).strip()
     
-    # Remove any non-numeric characters except decimal point and minus sign
     salary_str = re.sub(r'[^\d.-]', '', salary_str)
     
-    # Handle empty strings
     if salary_str == '' or salary_str == '.' or salary_str == '-':
         return None
     
     try:
-        # Convert to float
         salary_float = float(salary_str)
         
-        # Check for reasonable salary range (annual salary in USD equivalent)
-        # Anything below $1,000 or above $10,000,000 is likely incorrect
         if salary_float < 1000 or salary_float > 10000000:
             return None
         
@@ -390,21 +375,16 @@ def convert_to_usd(amount, currency_text):
     if pd.isna(amount) or pd.isna(currency_text):
         return None
     
-    # Clean the salary amount first
     amount_clean = clean_salary_value(amount)
     if amount_clean is None:
         return None
     
-    # Extract currency code
     currency_code = extract_currency_code(currency_text)
     
-    # Get conversion rate
     conversion_rate = CURRENCY_RATES.get(currency_code, 1.0)
     
-    # Convert to USD
     usd_amount = amount_clean * conversion_rate
     
-    # Additional sanity check
     if usd_amount < 1000 or usd_amount > 10000000:
         return None
     
@@ -467,15 +447,12 @@ def convert_all_salaries_to_usd(df, salary_col, currency_col):
             usd_salaries.append(None)
             currency_codes.append(None)
     
-    # Create a new dataframe with USD salaries
     df_usd = df.copy()
     df_usd['Salary_USD'] = usd_salaries
     df_usd['Currency_Code'] = currency_codes
     
-    # Remove rows with invalid USD conversions
     df_usd = df_usd.dropna(subset=['Salary_USD'])
     
-    # Remove extreme outliers (beyond 3 standard deviations)
     if len(df_usd) > 10:
         mean_salary = df_usd['Salary_USD'].mean()
         std_salary = df_usd['Salary_USD'].std()
@@ -492,14 +469,12 @@ def clean_language_data(languages_series):
     
     languages = languages_series.dropna().astype(str).str.split(';').explode()
     languages = languages.str.strip()
-    # Filter out unwanted values
     exclude_terms = ['unknown', 'none', 'nan', '', 'null', 'na', 'n/a', 'other']
     languages = languages[~languages.str.lower().isin(exclude_terms)]
     languages = languages[languages != '']
     
     return languages.value_counts()
 
-# Load data
 @st.cache_data
 def load_all_data():
     with st.spinner("📊 Loading dataset..."):
@@ -514,11 +489,9 @@ if df.empty:
     st.error("Failed to load data. Please check if data files exist.")
     st.stop()
 
-# Sidebar configuration - Simplified
 st.sidebar.title("🎯 Dashboard Controls")
 st.sidebar.markdown("---")
 
-# Country filter
 st.sidebar.subheader("🌍 Filter by Country")
 if 'Country' in df.columns:
     countries = ['All Countries'] + sorted(df['Country'].dropna().unique().tolist())
@@ -531,7 +504,6 @@ if selected_country != 'All Countries' and 'Country' in df.columns:
 else:
     df_filtered = df
 
-# Experience filter
 st.sidebar.subheader("📅 Filter by Experience")
 exp_ranges = ['All Experience', '0-2 years', '3-5 years', '6-10 years', '11-20 years', '20+ years']
 selected_exp = st.sidebar.selectbox("Years of Experience", exp_ranges, key='exp_filter')
@@ -548,7 +520,6 @@ if selected_exp != 'All Experience' and 'YearsCodeNum' in df_filtered.columns:
     elif selected_exp == '20+ years':
         df_filtered = df_filtered[df_filtered['YearsCodeNum'] > 20]
 
-# Role filter
 st.sidebar.subheader("👨‍💻 Filter by Role")
 if 'DevType' in df_filtered.columns:
     roles = df_filtered['DevType'].dropna().astype(str).str.split(';').explode()
@@ -569,7 +540,6 @@ st.sidebar.markdown(f'<div class="filter-pill">{selected_country}</div>', unsafe
 st.sidebar.markdown(f'<div class="filter-pill">{selected_exp}</div>', unsafe_allow_html=True)
 st.sidebar.markdown(f'<div style="margin-top: 1rem; color: #9CA3AF; font-size: 0.9rem;">Responses: <strong>{format_number(len(df_filtered))}</strong></div>', unsafe_allow_html=True)
 
-# Main header with logo
 col_logo, col_title = st.columns([1, 6])
 
 with col_logo:
@@ -759,11 +729,9 @@ with col2:
         
         st.markdown(lang_html, unsafe_allow_html=True)
         
-        # Language trend analysis
         if 'LanguageWantToWorkWith' in df_filtered.columns:
             wanted_langs = clean_language_data(df_filtered['LanguageWantToWorkWith'])
             
-            # Find trending languages (wanted but less commonly used)
             trending_langs = []
             for lang in wanted_langs.head(10).index:
                 if lang in language_counts.index:
@@ -781,14 +749,11 @@ with col2:
 
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-# Row 3: Salary Analysis with Currency Conversion
 st.markdown('<div class="sub-header">💰 Global Salary Analysis (Converted to USD)</div>', unsafe_allow_html=True)
 
-# Check for salary and currency columns
 salary_col = None
 currency_col = None
 
-# Determine which columns to use
 if 'CompTotal' in df_filtered.columns and 'Currency' in df_filtered.columns:
     salary_col = 'CompTotal'
     currency_col = 'Currency'
@@ -804,13 +769,10 @@ if salary_col:
         df_usd = convert_all_salaries_to_usd(df_filtered, salary_col, currency_col)
         usd_salary_series = df_usd['Salary_USD']
         
-        # Show currency distribution
         if 'Currency_Code' in df_usd.columns:
             
-            # Show top currencies
             top_currencies = df_usd['Currency_Code'].value_counts().head(10)
             
-            # Currency distribution chart
             with st.expander("🌍 View Currency Distribution"):
                 fig_currency = px.bar(
                     x=top_currencies.values,
@@ -823,7 +785,6 @@ if salary_col:
                 fig_currency.update_layout(height=300)
                 st.plotly_chart(fig_currency, use_container_width=True)
     else:
-        # Already in USD or unknown currency
         usd_salary_series = df_filtered[salary_col].apply(clean_salary_value)
         usd_salary_series = usd_salary_series.dropna()
         df_usd = pd.DataFrame({'Salary_USD': usd_salary_series})
@@ -881,7 +842,6 @@ if salary_col:
             bargap=0.1
         )
         
-        # Add mean and median lines
         fig_salary.add_vline(
             x=avg_salary,
             line_dash="dash",
@@ -899,7 +859,6 @@ if salary_col:
         
         st.plotly_chart(fig_salary, use_container_width=True)
         
-        # Salary by Role and Country
         tab1, tab2 = st.tabs(["📊 Salary by Role", "🌍 Salary by Country"])
         
         with tab1:
@@ -942,7 +901,6 @@ if salary_col:
         
         with tab2:
             if 'Country' in df_usd.columns:
-                # Calculate average USD salary per country
                 country_salary_data = []
                 country_groups = df_usd.groupby('Country')
                 
@@ -1006,21 +964,17 @@ with col_i1:
     
     insights = []
     
-    # Response count insight
     filtered_pct = (len(df_filtered) / len(df)) * 100 if len(df) > 0 else 0
     insights.append(f"• Viewing {filtered_pct:.1f}% of total dataset")
     
-    # Country insight
     if 'Country' in df_filtered.columns and selected_country != 'All Countries':
         country_count_filtered = len(df_filtered)
         insights.append(f"• {country_count_filtered} responses from {selected_country}")
     
-    # Experience insight
     if 'YearsCodeNum' in df_filtered.columns:
         avg_exp_filtered = df_filtered['YearsCodeNum'].mean()
         insights.append(f"• {avg_exp_filtered:.1f} years average experience")
     
-    # Role insight
     if 'DevType' in df_filtered.columns and selected_role != 'All Roles':
         role_count = len(df_filtered)
         insights.append(f"• {role_count} {selected_role} developers")
@@ -1036,23 +990,19 @@ with col_i2:
     
     trends = []
     
-    # AI trend
     if 'AISelect' in df_filtered.columns:
         ai_users = df_filtered['AISelect'].astype(str).str.contains('Yes', case=False, na=False).sum()
         ai_percentage = (ai_users / len(df_filtered)) * 100 if len(df_filtered) > 0 else 0
         trends.append(f"• AI adoption: {ai_percentage:.1f}%")
     
-    # Remote work trend
     if 'RemoteWork' in df_filtered.columns:
         remote_percentage = (df_filtered['RemoteWork'].astype(str).str.contains('Remote', case=False, na=False).sum() / len(df_filtered)) * 100 if len(df_filtered) > 0 else 0
         trends.append(f"• Remote work: {remote_percentage:.1f}%")
     
-    # Salary trend
     if 'usd_salary_series' in locals() and len(usd_salary_series) > 0:
         salary_median = usd_salary_series.median()
         trends.append(f"• Median salary: {format_currency(salary_median)}")
     
-    # Top language
     if 'LanguageHaveWorkedWith' in df_filtered.columns:
         top_lang = clean_language_data(df_filtered['LanguageHaveWorkedWith'])
         if not top_lang.empty:
@@ -1070,13 +1020,11 @@ with col_i3:
     
     recommendations = []
     
-    # AI recommendation
     if 'AISelect' in df_filtered.columns:
         ai_percentage = (df_filtered['AISelect'].astype(str).str.contains('Yes', case=False, na=False).sum() / len(df_filtered)) * 100 if len(df_filtered) > 0 else 0
         if ai_percentage < 50:
             recommendations.append("• Consider AI skill development")
     
-    # Salary recommendation
     if 'usd_salary_series' in locals() and len(usd_salary_series) > 0:
         salary_median = usd_salary_series.median()
         if salary_median < 50000:
@@ -1086,7 +1034,6 @@ with col_i3:
         else:
             recommendations.append("• Competitive market segment")
     
-    # Experience recommendation
     if 'YearsCodeNum' in df_filtered.columns:
         avg_exp = df_filtered['YearsCodeNum'].mean()
         if avg_exp < 3:
@@ -1096,7 +1043,6 @@ with col_i3:
         else:
             recommendations.append("• Explore leadership roles")
     
-    # Default recommendations
     if not recommendations:
         recommendations = [
             "• Stay updated with latest tech",
@@ -1113,7 +1059,6 @@ with col_i3:
 # Footer
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-# Calculate average experience for footer
 avg_exp_value = None
 if 'YearsCodeNum' in df_filtered.columns:
     avg_exp_value = df_filtered['YearsCodeNum'].mean()
@@ -1136,22 +1081,17 @@ with st.expander("🔧 Debug Information"):
     st.write("### Available Columns")
     st.write(f"Total columns: {len(df.columns)}")
     
-    # Show column groups
     st.write("### Column Groups")
     
-    # Language columns
     lang_cols = [col for col in df.columns if 'Language' in col]
     st.write(f"Language columns ({len(lang_cols)}): {lang_cols[:5]}{'...' if len(lang_cols) > 5 else ''}")
     
-    # Database columns
     db_cols = [col for col in df.columns if 'Database' in col]
     st.write(f"Database columns ({len(db_cols)}): {db_cols[:5]}{'...' if len(db_cols) > 5 else ''}")
     
-    # AI columns
     ai_cols = [col for col in df.columns if 'AI' in col]
     st.write(f"AI columns ({len(ai_cols)}): {ai_cols[:5]}{'...' if len(ai_cols) > 5 else ''}")
     
-    # Currency columns
     currency_cols = [col for col in df.columns if 'Currency' in col or 'currency' in col.lower()]
     st.write(f"Currency columns ({len(currency_cols)}): {currency_cols}")
     
@@ -1159,6 +1099,5 @@ with st.expander("🔧 Debug Information"):
         st.write("### Currency Distribution")
         st.write(df_filtered[currency_col].value_counts().head(10))
     
-    # Sample data
     st.write("### Sample Data (First 5 rows)")
     st.dataframe(df.head())
