@@ -156,7 +156,7 @@ def plot_experience_distribution(df):
     
     return fig
 
-def plot_country_distribution(df, top_n=10):
+
     """Plot top countries by developer count (excluding 'Unknown')"""
 
     filtered_df = df[
@@ -217,6 +217,44 @@ def plot_country_distribution(df, top_n=10):
         xaxis_tickangle=-45
     )
     
+    return fig
+
+def plot_country_distribution(df, top_n=10):
+    """Plot top countries with correct Stack Overflow percentage logic"""
+
+    total_respondents = df['Country'].notna().shape[0]
+
+    country_counts = (
+        df['Country']
+        .dropna()
+        .value_counts()
+    )
+
+    country_counts = country_counts[
+        country_counts.index.str.strip().str.lower() != 'unknown'
+    ].head(top_n)
+
+    percentages = (country_counts / total_respondents * 100).round(1)
+
+    fig = px.bar(
+        country_counts,
+        x=country_counts.values,
+        y=country_counts.index,
+        orientation='h',
+        title=f'Top {top_n} Countries by Developer Count',
+        labels={'x': 'Number of Developers', 'y': 'Country'},
+        text=[f"{p}%" for p in percentages],
+        color=country_counts.values,
+        color_continuous_scale='viridis'
+    )
+
+    fig.update_traces(textposition='auto')
+
+    fig.update_layout(
+        height=500,
+        showlegend=False
+    )
+
     return fig
 
 def plot_education_distribution(df):
