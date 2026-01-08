@@ -150,8 +150,116 @@ def plot_experience_distribution(df):
     )
     
     fig.update_layout(
+        height=500,
+        xaxis_tickangle=-45
+    )
+    
+    return fig
+
+def plot_country_distribution(df, top_n=10):
+    """Plot top countries by developer count (excluding 'Unknown')"""
+
+    filtered_df = df[
+        df['Country'].notna() &
+        (df['Country'].str.strip().str.lower() != 'unknown')
+    ]
+
+    country_counts = filtered_df['Country'].value_counts().head(top_n)
+
+    fig = px.bar(
+        country_counts,
+        x=country_counts.values,
+        y=country_counts.index,
+        orientation='h',
+        title=f'Top {top_n} Countries by Developer Count',
+        labels={'x': 'Number of Developers', 'y': 'Country'},
+        color=country_counts.values,
+        color_continuous_scale='viridis'
+    )
+
+    fig.update_layout(
+        height=500,
+        xaxis_title="Number of Developers",
+        yaxis_title="Country",
+        showlegend=False
+    )
+
+    return fig
+
+
+
+    """Plot coding experience distribution"""
+    # Clean and categorize experience
+    df_exp = df.copy()
+    df_exp['YearsCodeGroup'] = pd.cut(
+        pd.to_numeric(df_exp['YearsCode'], errors='coerce'),
+        bins=[0, 2, 5, 10, 20, 50],
+        labels=['0-2 years', '3-5 years', '6-10 years', '11-20 years', '20+ years']
+    )
+    
+    exp_counts = df_exp['YearsCodeGroup'].value_counts().sort_index()
+    
+    fig = px.bar(
+        x=exp_counts.index,
+        y=exp_counts.values,
+        title='Years of Coding Experience',
+        labels={'x': 'Experience Range', 'y': 'Number of Developers'},
+        text=exp_counts.values
+    )
+    
+    fig.update_traces(
+        marker_color='#F48024',
+        textposition='outside'
+    )
+    
+    fig.update_layout(
         height=400,
         xaxis_tickangle=-45
     )
     
+    return fig
+
+def plot_education_distribution(df):
+    """Plot education level breakdown"""
+
+    education_map = {
+        'Primary/elementary school': 'Primary/elementary school',
+        'Secondary school (e.g. American high school, German Realschule or Gymnasium, etc.)': 'Secondary school',
+        'Some college/university study without earning a degree':
+            'Some college/university study without earning a degree',
+        'Associate degree (A.A., A.S., etc.)': 'Associate degree',
+        'Bachelor’s degree (B.A., B.S., B.Eng., etc.)': 'Bachelor’s degree',
+        'Master’s degree (M.A., M.S., M.Eng., MBA, etc.)': 'Master’s degree',
+        'Professional degree (JD, MD, Ph.D, Ed.D, etc.)': 'Professional degree',
+        'Something else': 'Other'
+    }
+
+    df = df.copy()
+    df['EdLevelClean'] = df['EdLevel'].map(education_map).fillna('Other')
+
+    education_order = [
+        'Associate degree',
+        'Bachelor’s degree',
+        'Master’s degree',
+        'Primary/elementary school',
+        'Professional degree',
+        'Secondary school',
+        'Some college/university study without earning a degree',
+        'Other'
+    ]
+
+    edu_counts = df['EdLevelClean'].value_counts().reindex(education_order)
+
+    fig = px.bar(
+        y=edu_counts.index,
+        x=edu_counts.values,
+        orientation='h',
+        title='Education Level Distribution',
+        labels={'x': 'Number of Developers', 'y': 'Education Level'},
+        color=edu_counts.values,
+        color_continuous_scale='blues'
+    )
+
+    fig.update_layout(height=400)
+
     return fig

@@ -489,7 +489,10 @@ if df.empty:
     st.error("Failed to load data. Please check if data files exist.")
     st.stop()
 
-st.sidebar.title("🎯 Dashboard Controls")
+st.sidebar.markdown(
+    "<h4 style='margin: 0; padding: 0;'>🎯 Dashboard Controls</h4>",
+    unsafe_allow_html=True
+)
 st.sidebar.markdown("---")
 
 st.sidebar.subheader("🌍 Filter by Country")
@@ -593,7 +596,7 @@ with col_title:
     </div>
     """, unsafe_allow_html=True)
 
-st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height: 3rem;'></div>", unsafe_allow_html=True)
 
 # Row 1: Key Metrics
 st.markdown("### 📈 Global Overview")
@@ -895,7 +898,7 @@ if salary_col:
                     fig_role_salary.update_layout(
                         height=400,
                         xaxis_title="Average Salary (USD)",
-                        yaxis={'categoryorder': 'total ascending'}
+                        yaxis={'categoryorder': 'category ascending'}
                     )
                     st.plotly_chart(fig_role_salary, use_container_width=True)
         
@@ -934,7 +937,7 @@ if salary_col:
                     fig_country.update_layout(
                         height=400,
                         xaxis_title="Average Salary (USD)",
-                        yaxis={'categoryorder': 'total ascending'}
+                        yaxis={'categoryorder': 'category ascending'}
                     )
                     st.plotly_chart(fig_country, use_container_width=True)
                     
